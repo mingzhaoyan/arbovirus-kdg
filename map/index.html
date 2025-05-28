@@ -231,6 +231,17 @@
         <div class="content">
             <div id="map-container">
                 <iframe id="embedded-map" src="" width="100%" height="100%"></iframe>
+                <div id="map-loading" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+                                            display: none; flex-direction: column; justify-content: center; align-items: center;
+                                            background-color: rgba(255, 255, 255, 0.8); z-index: 10;">
+                    <p style="margin-bottom: 10px;">It takes up to 45 seconds to load the high resolution global map.
+                    </p>
+                    <div
+                        style="width: 80%; height: 10px; background-color: #ccc; border-radius: 5px; overflow: hidden;">
+                        <div id="map-progress-bar"
+                            style="width: 0%; height: 100%; background-color: #4caf50; transition: width 0.3s;"></div>
+                    </div>
+                </div>
             </div>
             <div id="chart-container">
                 <canvas id="comparison-chart"></canvas>
@@ -301,25 +312,46 @@
         }
 
         function updateIframeSrc() {
-            // 获取 select 元素
             var selector = document.getElementById('layer-selector');
-            // 获取 iframe 元素
             var iframe = document.getElementById('embedded-map');
-            // 获取时间滑块和年份标签
             var timeSlider = document.getElementById('time-slider');
             var yearLabel = document.getElementById('year-label');
 
-            // 更新 iframe 的 src 属性为 select 中选中的 value
+            // 获取加载提示元素
+            var loadingOverlay = document.getElementById('map-loading');
+            var progressBar = document.getElementById('map-progress-bar');
+
+            // 显示加载提示
+            loadingOverlay.style.display = "flex";
+            progressBar.style.width = "0%";
+
+            // 模拟进度增长到90%
+            let progress = 0;
+            const interval = setInterval(() => {
+                if (progress < 90) {
+                    progress += 1;
+                    progressBar.style.width = progress + "%";
+                }
+            }, 300);
+
+            // 设置 iframe src 并绑定 onload
             var selectedValue = selector.value;
+            iframe.onload = () => {
+                clearInterval(interval);
+                progressBar.style.width = "100%";
+                setTimeout(() => {
+                    loadingOverlay.style.display = "none";
+                }, 500); // 延迟隐藏遮罩层
+            };
             iframe.src = selectedValue;
 
-            // 如果是总病毒图层，禁用时间滑块；否则启用
+            // 是否启用时间滑块
             if (selectedValue === "Total Virus Count Layer.html") {
                 timeSlider.disabled = true;
-                yearLabel.style.color = "#aaa"; // 可选：灰色显示年份文字
+                yearLabel.style.color = "#aaa";
             } else {
                 timeSlider.disabled = false;
-                yearLabel.style.color = ""; // 恢复默认颜色
+                yearLabel.style.color = "";
             }
         }
 
@@ -380,7 +412,7 @@
         });
     </script>
     <script>
-       function populateVirusSelector(viruses) {
+        function populateVirusSelector(viruses) {
             const selector = document.getElementById('layer-selector');
             selector.innerHTML = ''; // 清空现有选项
 

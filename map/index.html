@@ -234,7 +234,8 @@
                 <div id="map-loading" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;
                                             display: none; flex-direction: column; justify-content: center; align-items: center;
                                             background-color: rgba(255, 255, 255, 0.8); z-index: 10;">
-                    <p style="margin-bottom: 10px;">Loading the high-resolution global map might take some time, depending on your internet connection
+                    <p style="margin-bottom: 10px;">Loading the high-resolution global map might take some time,
+                        depending on your internet connection
                     </p>
                     <div
                         style="width: 80%; height: 10px; background-color: #ccc; border-radius: 5px; overflow: hidden;">
@@ -274,23 +275,20 @@
             const selectedLang = document.getElementById('language-selector').value;
             document.title = translations[selectedLang].title;
 
-            // Update labels
-            document.querySelectorAll('.toolbar-item-label')[0].textContent = translations[selectedLang].layerSelectorLabel;
-            document.querySelectorAll('.toolbar-item-label')[1].textContent = translations[selectedLang].timeSliderLabel;
-            // document.querySelectorAll('.toolbar-item-label')[2].textContent = translations[selectedLang].comparisonToolButton;
-            document.querySelectorAll('.toolbar-item-label')[3].textContent = translations[selectedLang].languageLabel;
-            document.querySelectorAll('.toolbar-item-label')[4].textContent = translations[selectedLang].info;
+            // ✅ 修复1: 限定选择器范围到 .toolbar 内部
+            const labels = document.querySelectorAll('.toolbar .toolbar-item-label');
 
-            // Update select options
-            const layerSelector = document.getElementById('layer-selector');
-            layerSelector.options[0].text = "Total Virus Count Layer";
-            //layerSelector.options[1].text = translations[selectedLang].layerSelectorLabel + " - Virus Family Distribution";
+            // 更新标签（确保索引安全）
+            if (labels.length > 0) labels[0].textContent = translations[selectedLang].layerSelectorLabel;
+            if (labels.length > 1) labels[1].textContent = translations[selectedLang].timeSliderLabel;
+            if (labels.length > 2) labels[2].textContent = translations[selectedLang].languageLabel;
+            if (labels.length > 3) labels[3].textContent = translations[selectedLang].info;
 
-            // Update year label
-            document.getElementById('year-label').textContent = translations[selectedLang].timeSliderLabel + " " + document.getElementById('time-slider').value;
+            // ✅ 修复2: 更新 Info 按钮文本
+            document.getElementById('info-button').textContent = translations[selectedLang].info;
 
-            // Update button text
-            document.querySelector('.toolbar button').textContent = translations[selectedLang].comparisonToolButton;
+            // ✅ 修复3: year-label 只显示年份（不再拼接标签）
+            document.getElementById('year-label').textContent = document.getElementById('time-slider').value;
         }
 
         document.getElementById('time-slider').addEventListener('input', function () {
@@ -311,42 +309,42 @@
             }
         }
 
+        // 2. 修改 updateIframeSrc (关键修改)
         function updateIframeSrc() {
             var selector = document.getElementById('layer-selector');
             var iframe = document.getElementById('embedded-map');
             var timeSlider = document.getElementById('time-slider');
             var yearLabel = document.getElementById('year-label');
-
-            // 获取加载提示元素
-            var loadingOverlay = document.getElementById('map-loading');
-            var progressBar = document.getElementById('map-progress-bar');
-
-            // 显示加载提示
-            loadingOverlay.style.display = "flex";
-            progressBar.style.width = "0%";
-
-            // 模拟进度增长到90%
-            let progress = 0;
-            const interval = setInterval(() => {
-                if (progress < 90) {
-                    progress += 1;
-                    progressBar.style.width = progress + "%";
-                }
-            }, 150);
-
-            // 设置 iframe src 并绑定 onload
+            // 获取图层值
             var selectedValue = selector.value;
-            iframe.onload = () => {
-                clearInterval(interval);
-                progressBar.style.width = "100%";
-                setTimeout(() => {
-                    loadingOverlay.style.display = "none";
-                }, 500); // 延迟隐藏遮罩层
-            };
-            iframe.src = selectedValue;
 
-            // 是否启用时间滑块
-            if (selectedValue === "Total Virus Count Layer.html") {
+            // var loadingOverlay = document.getElementById('map-loading');
+            // var progressBar = document.getElementById('map-progress-bar');
+
+            // loadingOverlay.style.display = "flex";
+            // progressBar.style.width = "0%";
+
+            // let progress = 0;
+            // const interval = setInterval(() => {
+            //     if (progress < 90) {
+            //         progress += 1;
+            //         progressBar.style.width = progress + "%";
+            //     }
+            // }, 15);
+
+            // var selectedValue = selector.value;
+            // iframe.onload = () => {
+            //     clearInterval(interval);
+            //     progressBar.style.width = "100%";
+            //     setTimeout(() => {
+            //         loadingOverlay.style.display = "none";
+            //     }, 50);
+            // };
+            // ✅ 关键修改：添加基础路径
+            iframe.src = `https://yydwjj.xyz/map/${selectedValue}`;
+
+            // ✅ 关键修改：使用编码后的字符串判断
+            if (selectedValue === "Total%20Virus%20Count%20Layer.html") {
                 timeSlider.disabled = true;
                 yearLabel.style.color = "#aaa";
             } else {
